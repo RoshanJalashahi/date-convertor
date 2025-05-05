@@ -2,6 +2,7 @@
 import React from 'react';
 import DateConverter from '@/components/DateConverter';
 import CalendarInfo from '@/components/CalendarInfo';
+import AgeCalculator from '@/components/AgeCalculator';
 
 const Index: React.FC = () => {
   return (
@@ -15,6 +16,7 @@ const Index: React.FC = () => {
         
         <main>
           <DateConverter />
+          <AgeCalculator />
           <CalendarInfo />
         </main>
         
