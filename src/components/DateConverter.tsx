@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +11,8 @@ import {
   formatEnglishDate, 
   formatNepaliDate,
   englishToNepali, 
-  nepaliToEnglish 
+  nepaliToEnglish,
+  getDaysInNepaliMonth
 } from '@/utils/dateConverter';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,8 +22,12 @@ import { cn } from '@/lib/utils';
 
 const DateConverter: React.FC = () => {
   // English to Nepali state
-  const [englishDate, setEnglishDate] = useState<Date>(new Date());
-  const [nepaliDate, setNepaliDate] = useState(() => englishToNepali(new Date()));
+  const [englishYear, setEnglishYear] = useState<number>(new Date().getFullYear());
+  const [englishMonth, setEnglishMonth] = useState<number>(new Date().getMonth());
+  const [englishDay, setEnglishDay] = useState<number>(new Date().getDate());
+  const [convertedNepaliDate, setConvertedNepaliDate] = useState(() => 
+    englishToNepali(new Date())
+  );
 
   // Nepali to English state
   const [nepaliYear, setNepaliYear] = useState<number>(2080);
@@ -33,10 +38,12 @@ const DateConverter: React.FC = () => {
   );
 
   // Handle English to Nepali conversion
-  const handleEnglishDateChange = (date: Date | undefined) => {
-    if (date) {
-      setEnglishDate(date);
-      setNepaliDate(englishToNepali(date));
+  const handleEnglishDateChange = () => {
+    try {
+      const englishDate = new Date(englishYear, englishMonth, englishDay);
+      setConvertedNepaliDate(englishToNepali(englishDate));
+    } catch (error) {
+      console.error("Conversion error:", error);
     }
   };
 
@@ -50,19 +57,43 @@ const DateConverter: React.FC = () => {
     }
   };
 
-  // Generate year options (2000-2090 BS)
-  const yearOptions = Array.from({ length: 91 }, (_, i) => 2000 + i);
+  // Generate year options for English date (current year ± 100 years)
+  const currentYear = new Date().getFullYear();
+  const englishYearOptions = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i);
   
-  // Generate day options based on selected month and year
-  const getDaysInNepaliMonth = (year: number, month: number): number => {
-    const yearData = [2000, [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 29, 31]];
-    return yearData[1][month];
+  // Generate day options based on selected English month and year
+  const getEnglishDaysInMonth = (year: number, month: number): number => {
+    return new Date(year, month + 1, 0).getDate();
   };
   
-  const dayOptions = Array.from(
+  const englishDayOptions = Array.from(
+    { length: getEnglishDaysInMonth(englishYear, englishMonth) }, 
+    (_, i) => i + 1
+  );
+
+  // Generate year options for Nepali date (2000-2090 BS)
+  const yearOptions = Array.from({ length: 91 }, (_, i) => 2000 + i);
+  
+  // Generate day options based on selected Nepali month and year
+  const nepaliDayOptions = Array.from(
     { length: getDaysInNepaliMonth(nepaliYear, nepaliMonth) }, 
     (_, i) => i + 1
   );
+
+  // Update the day if it exceeds the days in the month when month/year changes
+  useEffect(() => {
+    const daysInMonth = getEnglishDaysInMonth(englishYear, englishMonth);
+    if (englishDay > daysInMonth) {
+      setEnglishDay(daysInMonth);
+    }
+  }, [englishYear, englishMonth]);
+
+  useEffect(() => {
+    const daysInMonth = getDaysInNepaliMonth(nepaliYear, nepaliMonth);
+    if (nepaliDay > daysInMonth) {
+      setNepaliDay(daysInMonth);
+    }
+  }, [nepaliYear, nepaliMonth]);
 
   return (
     <div className="w-full max-w-4xl mx-auto">
@@ -85,26 +116,74 @@ const DateConverter: React.FC = () => {
               <div className="flex flex-col md:flex-row md:space-x-6 space-y-6 md:space-y-0">
                 <div className="flex-1">
                   <Label className="text-lg font-semibold mb-4 block">English Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className="w-full justify-start text-left font-normal h-14"
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="english-year">Year</Label>
+                      <Select
+                        value={englishYear.toString()}
+                        onValueChange={(value) => setEnglishYear(parseInt(value))}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {englishDate ? format(englishDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={englishDate}
-                        onSelect={handleEnglishDateChange}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Year" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {englishYearOptions.map((year) => (
+                              <SelectItem key={year} value={year.toString()}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="english-month">Month</Label>
+                      <Select
+                        value={englishMonth.toString()}
+                        onValueChange={(value) => setEnglishMonth(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Month" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {englishMonths.map((month, index) => (
+                              <SelectItem key={index} value={index.toString()}>
+                                {month}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="english-day">Day</Label>
+                      <Select
+                        value={englishDay.toString()}
+                        onValueChange={(value) => setEnglishDay(parseInt(value))}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Day" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {englishDayOptions.map((day) => (
+                              <SelectItem key={day} value={day.toString()}>
+                                {day}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={handleEnglishDateChange}
+                  >
+                    Convert
+                  </Button>
                 </div>
                 
                 <div className="flex items-center justify-center">
@@ -114,9 +193,9 @@ const DateConverter: React.FC = () => {
                 <div className="flex-1">
                   <Label className="text-lg font-semibold mb-4 block">Nepali Date</Label>
                   <div className="w-full p-4 border rounded-md bg-muted">
-                    <p className="text-lg">{formatNepaliDate(nepaliDate)}</p>
+                    <p className="text-lg">{formatNepaliDate(convertedNepaliDate)}</p>
                     <p className="text-sm text-muted-foreground mt-2">
-                      {nepaliDate.year} साल {nepaliMonths[nepaliDate.month]} {nepaliDate.day} गते {nepaliDate.dayName}
+                      {convertedNepaliDate.year} साल {nepaliMonths[convertedNepaliDate.month]} {convertedNepaliDate.day} गते {convertedNepaliDate.dayName}
                     </p>
                   </div>
                 </div>
@@ -190,7 +269,7 @@ const DateConverter: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {dayOptions.map((day) => (
+                            {nepaliDayOptions.map((day) => (
                               <SelectItem key={day} value={day.toString()}>
                                 {day}
                               </SelectItem>
