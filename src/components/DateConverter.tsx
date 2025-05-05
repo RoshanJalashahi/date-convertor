@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,13 +11,12 @@ import {
   formatNepaliDate,
   englishToNepali, 
   nepaliToEnglish,
-  getDaysInNepaliMonth
+  getDaysInNepaliMonth,
+  getDaysInMonth
 } from '@/utils/dateConverter';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 const DateConverter: React.FC = () => {
   // English to Nepali state
@@ -62,17 +60,13 @@ const DateConverter: React.FC = () => {
   const englishYearOptions = Array.from({ length: 201 }, (_, i) => currentYear - 100 + i);
   
   // Generate day options based on selected English month and year
-  const getEnglishDaysInMonth = (year: number, month: number): number => {
-    return new Date(year, month + 1, 0).getDate();
-  };
-  
   const englishDayOptions = Array.from(
-    { length: getEnglishDaysInMonth(englishYear, englishMonth) }, 
+    { length: getDaysInMonth(englishYear, englishMonth) }, 
     (_, i) => i + 1
   );
 
   // Generate year options for Nepali date (2000-2090 BS)
-  const yearOptions = Array.from({ length: 91 }, (_, i) => 2000 + i);
+  const nepaliYearOptions = Array.from({ length: 91 }, (_, i) => 2000 + i);
   
   // Generate day options based on selected Nepali month and year
   const nepaliDayOptions = Array.from(
@@ -82,7 +76,7 @@ const DateConverter: React.FC = () => {
 
   // Update the day if it exceeds the days in the month when month/year changes
   useEffect(() => {
-    const daysInMonth = getEnglishDaysInMonth(englishYear, englishMonth);
+    const daysInMonth = getDaysInMonth(englishYear, englishMonth);
     if (englishDay > daysInMonth) {
       setEnglishDay(daysInMonth);
     }
@@ -229,7 +223,7 @@ const DateConverter: React.FC = () => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {yearOptions.map((year) => (
+                            {nepaliYearOptions.map((year) => (
                               <SelectItem key={year} value={year.toString()}>
                                 {year}
                               </SelectItem>

@@ -132,8 +132,17 @@ const isLeapYear = (year: number): boolean => {
 };
 
 // Function to get total days in a month for Gregorian calendar
-const getDaysInMonth = (year: number, month: number): number => {
+export const getDaysInMonth = (year: number, month: number): number => {
   return [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month];
+};
+
+// Function to get days in Nepali month for a specific year and month
+export const getDaysInNepaliMonth = (year: number, month: number): number => {
+  const yearData = nepaliDateData.find(data => data[0] === year);
+  if (yearData && Array.isArray(yearData[1])) {
+    return yearData[1][month];
+  }
+  return 30; // Default fallback
 };
 
 // Function to convert English date to Nepali date
@@ -157,7 +166,7 @@ export const englishToNepali = (date: Date): { year: number; month: number; day:
   let daysInMonth;
   while (totalEnglishDays > 0) {
     // Get the days in current Nepali month
-    daysInMonth = nepaliDateData.find(item => item[0] === nepaliYear)?.[1][nepaliMonth] || 30;
+    daysInMonth = getDaysInNepaliMonth(nepaliYear, nepaliMonth);
     
     if (nepaliDay < daysInMonth) {
       nepaliDay++;
@@ -191,18 +200,14 @@ export const nepaliToEnglish = (year: number, month: number, day: number): Date 
   
   // Days from reference year to year before target year
   for (let i = referenceNepaliDate.year; i < year; i++) {
-    const yearData = nepaliDateData.find(data => data[0] === i);
-    if (yearData) {
-      totalNepaliDays += yearData[1].reduce((sum, days) => sum + days, 0);
+    for (let j = 0; j < 12; j++) {
+      totalNepaliDays += getDaysInNepaliMonth(i, j);
     }
   }
   
   // Days from months in target year
-  const yearData = nepaliDateData.find(data => data[0] === year);
-  if (yearData) {
-    for (let i = 0; i < month; i++) {
-      totalNepaliDays += yearData[1][i];
-    }
+  for (let i = 0; i < month; i++) {
+    totalNepaliDays += getDaysInNepaliMonth(year, i);
   }
   
   // Add days of target month
