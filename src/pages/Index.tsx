@@ -12,7 +12,12 @@ const Index: React.FC = () => {
   const todayFormatted = format(today, "EEEE, MMMM d, yyyy");
   
   return (
-    <div className="min-h-screen nepali-pattern">
+    <div className="min-h-screen nepali-pattern relative">
+      {/* Fixed position visitor counter */}
+      <div className="fixed top-4 right-4 z-10">
+        <VisitorCounter />
+      </div>
+      
       <div className="container mx-auto px-4 py-12">
         <header className="text-center mb-12">
           <h1 className="text-4xl font-bold text-primary mb-2">Nepali Calendar Converter</h1>
