@@ -3,6 +3,7 @@ import React from 'react';
 import DateConverter from '@/components/DateConverter';
 import CalendarInfo from '@/components/CalendarInfo';
 import AgeCalculator from '@/components/AgeCalculator';
+import VisitorCounter from '@/components/VisitorCounter';
 import { format } from 'date-fns';
 
 const Index: React.FC = () => {
@@ -28,7 +29,8 @@ const Index: React.FC = () => {
           <CalendarInfo />
         </main>
         
-        <footer className="text-center mt-16 pt-6 border-t text-sm text-muted-foreground">
+        <footer className="text-center mt-16 pt-6 border-t text-sm text-muted-foreground flex flex-col items-center gap-4">
+          <VisitorCounter />
           <p>© {new Date().getFullYear()} Nepali Calendar Converter</p>
         </footer>
       </div>
