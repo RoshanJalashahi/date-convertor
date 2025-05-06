@@ -14,7 +14,8 @@ import {
   nepaliToEnglish,
   englishToNepali
 } from '@/utils/dateConverter';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, Loader } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const AgeCalculator: React.FC = () => {
   // English calendar states
@@ -30,6 +31,12 @@ const AgeCalculator: React.FC = () => {
   // Age result states
   const [englishAge, setEnglishAge] = useState<{years: number; months: number; days: number} | null>(null);
   const [nepaliAge, setNepaliAge] = useState<{years: number; months: number; days: number} | null>(null);
+
+  // Loading state
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Toast for notifications
+  const { toast } = useToast();
 
   // Generate year options for English date (1900 to current year)
   const currentYear = new Date().getFullYear();
@@ -50,47 +57,85 @@ const AgeCalculator: React.FC = () => {
     (_, i) => i + 1
   );
 
-  // Calculate age in English calendar
-  const calculateEnglishAge = () => {
-    const birthDate = new Date(englishBirthYear, englishBirthMonth, englishBirthDay);
-    const today = new Date();
+  // Calculate age in English calendar with loading
+  const calculateEnglishAge = async () => {
+    setIsLoading(true);
     
-    const years = differenceInYears(today, birthDate);
+    // Small delay to show loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
     
-    // Calculate remaining months after subtracting years
-    const birthDatePlusYears = new Date(birthDate);
-    birthDatePlusYears.setFullYear(birthDate.getFullYear() + years);
-    const months = differenceInMonths(today, birthDatePlusYears);
-    
-    // Calculate remaining days after subtracting years and months
-    const birthDatePlusYearsAndMonths = new Date(birthDatePlusYears);
-    birthDatePlusYearsAndMonths.setMonth(birthDatePlusYears.getMonth() + months);
-    let days = differenceInDays(today, birthDatePlusYearsAndMonths);
-    
-    // Validate and set the age
-    if (years >= 0 && today >= birthDate) {
-      setEnglishAge({ years, months, days });
+    try {
+      const birthDate = new Date(englishBirthYear, englishBirthMonth, englishBirthDay);
+      const today = new Date();
       
-      // Calculate Nepali age as well based on the English birth date
-      const nepaliDate = englishToNepali(birthDate);
-      setNepaliBirthYear(nepaliDate.year);
-      setNepaliBirthMonth(nepaliDate.month);
-      setNepaliBirthDay(nepaliDate.day);
-      calculateNepaliAge(nepaliDate.year, nepaliDate.month, nepaliDate.day);
-    } else {
-      setEnglishAge(null);
-      setNepaliAge(null);
+      if (today < birthDate) {
+        toast({
+          title: "Invalid Birth Date",
+          description: "Birth date cannot be in the future.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      const years = differenceInYears(today, birthDate);
+      
+      // Calculate remaining months after subtracting years
+      const birthDatePlusYears = new Date(birthDate);
+      birthDatePlusYears.setFullYear(birthDate.getFullYear() + years);
+      const months = differenceInMonths(today, birthDatePlusYears);
+      
+      // Calculate remaining days after subtracting years and months
+      const birthDatePlusYearsAndMonths = new Date(birthDatePlusYears);
+      birthDatePlusYearsAndMonths.setMonth(birthDatePlusYears.getMonth() + months);
+      let days = differenceInDays(today, birthDatePlusYearsAndMonths);
+      
+      // Validate and set the age
+      if (years >= 0) {
+        setEnglishAge({ years, months, days });
+        
+        // Calculate Nepali age as well based on the English birth date
+        const nepaliDate = englishToNepali(birthDate);
+        setNepaliBirthYear(nepaliDate.year);
+        setNepaliBirthMonth(nepaliDate.month);
+        setNepaliBirthDay(nepaliDate.day);
+        calculateNepaliAge(nepaliDate.year, nepaliDate.month, nepaliDate.day);
+        
+        toast({
+          title: "Age Calculated Successfully",
+          description: `You are ${years} years, ${months} months, and ${days} days old.`
+        });
+      }
+    } catch (error) {
+      console.error("Error calculating English age:", error);
+      toast({
+        title: "Calculation Error",
+        description: "An error occurred while calculating your age.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Calculate age in Nepali calendar
-  const calculateNepaliAge = (year = nepaliBirthYear, month = nepaliBirthMonth, day = nepaliBirthDay) => {
+  const calculateNepaliAge = async (year = nepaliBirthYear, month = nepaliBirthMonth, day = nepaliBirthDay) => {
+    setIsLoading(true);
+    
+    // Small delay to show loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     try {
       const birthDate = nepaliToEnglish(year, month, day);
       const today = new Date();
       
       if (today < birthDate) {
-        setNepaliAge(null);
+        toast({
+          title: "Invalid Birth Date",
+          description: "Birth date cannot be in the future.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
         return;
       }
       
@@ -123,10 +168,20 @@ const AgeCalculator: React.FC = () => {
       setEnglishBirthYear(englishDate.getFullYear());
       setEnglishBirthMonth(englishDate.getMonth());
       setEnglishBirthDay(englishDate.getDate());
-      calculateEnglishAge();
+      
+      toast({
+        title: "Age Calculated Successfully",
+        description: `You are ${years} years, ${months} months, and ${days} days old in Nepali calendar.`
+      });
     } catch (error) {
       console.error("Error calculating Nepali age:", error);
-      setNepaliAge(null);
+      toast({
+        title: "Calculation Error",
+        description: "An error occurred while calculating your age.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -214,7 +269,16 @@ const AgeCalculator: React.FC = () => {
                 </div>
               </div>
               
-              <Button onClick={calculateEnglishAge} className="w-full">Calculate Age</Button>
+              <Button onClick={calculateEnglishAge} className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    Calculating...
+                  </>
+                ) : (
+                  'Calculate Age'
+                )}
+              </Button>
             </TabsContent>
             
             {/* Nepali Calendar Tab */}
@@ -282,7 +346,16 @@ const AgeCalculator: React.FC = () => {
                 </div>
               </div>
               
-              <Button onClick={() => calculateNepaliAge()} className="w-full">Calculate Age</Button>
+              <Button onClick={() => calculateNepaliAge()} className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />
+                    Calculating...
+                  </>
+                ) : (
+                  'Calculate Age'
+                )}
+              </Button>
             </TabsContent>
           </Tabs>
           
