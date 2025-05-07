@@ -36,7 +36,7 @@ const Index: React.FC = () => {
         
         <footer className="text-center mt-16 pt-6 border-t text-sm text-muted-foreground flex flex-col items-center gap-4">
           <VisitorCounter />
-          <p>© {new Date().getFullYear()} Nepali Calendar Converter</p>
+          <p>© {new Date().getFullYear()} Nepali Calendar Converter  ©powered by Desvu Techonolgy</p>
         </footer>
       </div>
     </div>
