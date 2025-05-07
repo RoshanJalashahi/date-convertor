@@ -35,7 +35,6 @@ Before setting up the project, make sure you have:
 Create a `.env` file in the project root with the following variables:
 
 ```
-VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
@@ -93,3 +92,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - The Nepali date conversion algorithm
 - Tailwind CSS and Shadcn UI for the beautiful components
 - Supabase for the backend services
+

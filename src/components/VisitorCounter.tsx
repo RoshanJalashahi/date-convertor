@@ -3,20 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase client with proper error handling
-const initSupabase = () => {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  
-  if (!supabaseUrl || !supabaseKey) {
-    console.error('Supabase credentials are missing. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set in your environment.');
-    return null;
-  }
-  
-  return createClient(supabaseUrl, supabaseKey);
-};
-
-const supabase = initSupabase();
+// Initialize Supabase client with your credentials
+const supabaseUrl = 'https://ttdybspjpvhctvtliqxy.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY; // Using environment variable for security
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const VisitorCounter: React.FC = () => {
   const [visitorCount, setVisitorCount] = useState<number>(0);
@@ -27,24 +17,6 @@ const VisitorCounter: React.FC = () => {
     const incrementAndFetchVisitorCount = async () => {
       try {
         setLoading(true);
-        
-        // If Supabase client is not initialized, use local counter
-        if (!supabase) {
-          console.warn('Using local storage for visitor count as Supabase is not configured.');
-          const localCount = parseInt(localStorage.getItem('visitorCount') || '0');
-          const newCount = localCount + 1;
-          localStorage.setItem('visitorCount', newCount.toString());
-          setVisitorCount(newCount);
-          
-          toast({
-            title: "Welcome!",
-            description: "You're visitor #" + newCount + " (local count)",
-            duration: 3000,
-          });
-          
-          setLoading(false);
-          return;
-        }
         
         // Check if this is a new session
         const lastVisit = localStorage.getItem('lastVisit');
